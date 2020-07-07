@@ -1,0 +1,61 @@
+SUBROUTINE UNIX.TOUCH.ECHO.COMMANDS
+*-----------------------------------------------------------------------------
+* Andres Ambrosio
+* This subroutine shows how to use the the Unix commands 'touch' and 'echo' as
+* an alternative to OPENSEQ, WRITESEQ and CLOSESEQ statements.
+* The subroutine will create the 'testAccountFile.log' file in 'BP' directory.
+*-----------------------------------------------------------------------------
+    $INCLUDE T24.BP I_COMMON
+    $INCLUDE T24.BP I_EQUATE
+    $INCLUDE T24.BP I_F.ACCOUNT
+
+    GOSUB INIT
+    GOSUB FILE.TEST
+    RETURN
+
+*---------------------------------------------------------------------
+INIT:
+*---------------------------------------------------------------------
+    FN.ACCOUNT = "F.ACCOUNT"
+    F.ACCOUNT  = ""
+    CALL OPF(FN.ACCOUNT, F.ACCOUNT)
+
+    V.EXE.HOME = ""
+    EXECUTE "pwd" CAPTURING V.EXE.HOME
+    DISPLAY "EXECUTE_HOME='" :V.EXE.HOME: "'"
+
+RETURN
+
+
+*---------------------------------------------------------------------
+FILE.TEST:
+*---------------------------------------------------------------------
+    V.FILE.PATH.NAME = V.EXE.HOME : "/BP/testAccountFile.log"
+
+    SEL.ACCT = "SELECT " :FN.ACCOUNT: " WITH CATEGORY EQ 1001 BY @ID"
+    V.ACC.LIST = "" ;  V.ACC.NUM = 0  ;  V.ACC.RET = ""
+    CALL EB.READLIST(SEL.ACCT, V.ACC.LIST, '', V.ACC.NUM, V.ACC.RET)
+    DISPLAY SEL.ACCT :" ; ACC.NUM=": V.ACC.NUM
+
+    IF V.ACC.NUM THEN
+        V.TOUCH.RESP = ""
+        V.CNTR = 0
+        DISPLAY "SH touch " :V.FILE.PATH.NAME
+        EXECUTE "SH touch " :V.FILE.PATH.NAME CAPTURING V.TOUCH.RESP
+        DISPLAY "V.TOUCH.RESP='" :V.TOUCH.RESP: "'"
+
+        IF V.TOUCH.RESP EQ "" THEN
+            LOOP
+                V.CURR.ACCT = ""  ;  V.ID.AC = ""
+                V.ECHO.RESP = ""  ;  AC.POS  = ""
+                REMOVE V.ID.AC FROM V.ACC.LIST SETTING AC.POS
+            WHILE V.ID.AC : AC.POS
+                EXECUTE "SH echo " :V.ID.AC: " >> " :V.FILE.PATH.NAME CAPTURING V.ECHO.RESP
+                DISPLAY "V.ECHO.RESP<" :(++V.CNTR): ">='" :V.ECHO.RESP: "'"
+            REPEAT
+        END
+    END
+
+RETURN
+
+END
