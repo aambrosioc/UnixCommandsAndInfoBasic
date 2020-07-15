@@ -1,0 +1,80 @@
+SUBROUTINE UNIX.SHELL.SCRIPT.INFOBS
+*-----------------------------------------------------------------------------
+* Andres Ambrosio
+* 20200715
+* This subroutine shows how to create and execute a simple Unix Shell Script
+* in a InfoBasic 'M' routine, then it gets the response and process it in
+* InfoBasic.
+* In this case the Unix command get the running processes on the system and
+* sort them by the column 1 (UID). The command is executed by a shell script,
+* which is deleted at the end of the process.
+*-----------------------------------------------------------------------------
+    $INCLUDE T24.BP I_COMMON
+    $INCLUDE T24.BP I_EQUATE
+
+    GOSUB INIT
+    GOSUB PROCESS
+    RETURN
+
+
+*---------------------------------------------------------------------
+INIT:
+*---------------------------------------------------------------------
+    V.TOUCH.RESP   = ""
+    V.SHELL.SPT    = ""
+    V.LINE.BREAK   = CHAR(10)
+    V.UNIX.HOME    = @PATH
+    V.FILE.PREFIX  = "AOCA"
+    V.TIME.DATE    = EREPLACE(EREPLACE(TIMEDATE(), " ", ""), ":", "")
+
+    V.FILE.NAME    = V.FILE.PREFIX :"_": RND(999999) :"_": V.TIME.DATE :".sh"
+    V.FULL.FILE    = V.UNIX.HOME :"/BP/": V.FILE.NAME
+    V.UNIX.CMD     = 'ps -fea | sort -k1'
+
+RETURN
+
+
+*---------------------------------------------------------------------
+PROCESS:
+*---------------------------------------------------------------------
+    EXECUTE "SH touch " :V.FULL.FILE CAPTURING V.TOUCH.RESP
+    IF V.TOUCH.RESP NE "" THEN
+        DISPLAY "***ERROR='" :V.TOUCH.RESP: "'. Could not generate the file " :V.FILE.NAME
+        GOSUB FINALLY
+    END
+
+    V.SHELL.SPT  = "#!/bin/bash" :V.LINE.BREAK
+    V.SHELL.SPT := V.UNIX.CMD    :V.LINE.BREAK
+    V.SHELL.SPT := "exit"        :V.LINE.BREAK
+    V.SHELL.SPT := "EOT"
+
+    V.ECHO.RESP = ""
+    EXECUTE "SH echo '" :V.SHELL.SPT: "' >> " :V.FULL.FILE CAPTURING V.ECHO.RESP
+    IF V.ECHO.RESP NE "" THEN
+       DISPLAY "***ERROR='" :V.ECHO.RESP: "'. Could not write to file " :V.FILE.NAME
+       GOSUB FINALLY
+    END
+
+    V.CMD.RESPONSE = ""
+    EXECUTE "SH chmod 710 ": V.FULL.FILE CAPTURING V.CMD.RESPONSE
+
+    V.SHELL.RESPONSE = ""
+    EXECUTE "sh ": V.FULL.FILE CAPTURING V.SHELL.RESPONSE
+
+    V.RESP.NUM = DCOUNT(V.SHELL.RESPONSE,FM)
+    DISPLAY "TOTAL LINES = '" :V.RESP.NUM: "'"
+    FOR I = 1 TO V.RESP.NUM
+       DISPLAY I :" ... ": V.SHELL.RESPONSE<I>
+    NEXT I
+
+    V.RM.RESPONSE = ""
+    EXECUTE "SH rm " : V.FULL.FILE CAPTURING V.RM.RESPONSE
+
+RETURN
+
+*---------------------------------------------------------------------------------
+FINALLY:
+*--Last step in Program
+*---------------------------------------------------------------------------------
+
+END

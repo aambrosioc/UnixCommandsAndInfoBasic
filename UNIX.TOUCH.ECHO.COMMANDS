@@ -1,7 +1,8 @@
 SUBROUTINE UNIX.TOUCH.ECHO.COMMANDS
 *-----------------------------------------------------------------------------
 * Andres Ambrosio
-* This subroutine shows how to use the the Unix commands 'touch' and 'echo' as
+* 20200707
+* This subroutine shows how to use the Unix commands 'touch' and 'echo' as
 * an alternative to OPENSEQ, WRITESEQ and CLOSESEQ statements.
 * The subroutine will create the 'testAccountFile.log' file in 'BP' directory.
 *-----------------------------------------------------------------------------
