@@ -1,0 +1,45 @@
+SUBROUTINE UNIX.TEST.COMMANDS
+*-----------------------------------------------------------------------------
+* Andres Ambrosio
+* 20201229
+* Subroutine to show how to use some Unix commands into an infoBasic rtn.
+* They could be useful in different scenarios like event logs, unique file names.
+*
+* Be sure that shell script 'scriptPrintScreen.sh' is available in TEMP.BP and 
+* with execution permissions
+* Parameter1 = Change text to yellow (1). Change background to green (2)
+* Parameter2 = "Text string to print"
+*-----------------------------------------------------------------------------
+    $INCLUDE T24.BP I_COMMON
+    $INCLUDE T24.BP I_EQUATE
+
+    GOSUB INIT
+    GOSUB TEST
+    RETURN
+
+*---------------------------------------------------------------------
+INIT:
+*---------------------------------------------------------------------
+    V.UNIX.DATE   = ""
+    V.UNIX.TIME   = ""
+    V.UNIX.RANDOM = ""
+
+RETURN
+
+*---------------------------------------------------------------------
+TEST:
+*---------------------------------------------------------------------
+    EXECUTE "SH printf '%s\n'"
+
+    EXECUTE "SH date +%Y%m%d" CAPTURING V.UNIX.DATE  ;*--Date in YYYYMMDD format
+    EXECUTE "SH sh " :@PATH:"/TEMP.BP/scriptPrintScreen.sh 1 'V.UNIX.DATE = " :V.UNIX.DATE: "'"
+
+    EXECUTE "SH date +%T" CAPTURING V.UNIX.TIME  ;*--Time in HH:MM:SS format
+    EXECUTE "SH sh " :@PATH:"/TEMP.BP/scriptPrintScreen.sh 1 'V.UNIX.TIME = " :V.UNIX.TIME: "'"
+
+    EXECUTE "SH echo $(($RANDOM % 10000000))" CAPTURING V.UNIX.RANDOM  ;*--Random number between 0 and 9,999,999
+    EXECUTE "SH sh " :@PATH:"/TEMP.BP/scriptPrintScreen.sh 2 'V.UNIX.RANDOM = " :V.UNIX.RANDOM: "'"
+
+RETURN
+
+END
